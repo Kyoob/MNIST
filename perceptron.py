@@ -19,8 +19,7 @@ batch_size = 100
 weight_range = range(num_inputs+1)
 init_weights = [[uniform(-.05, .05) for _ in weight_range]
                 for _ in range(num_outputs)]
-train_accuracies = [[], [], []]
-test_accuracies = [[], [], []]
+train_accuracies, test_accuracies = [[], [], []], [[], [], []]
 acc_limit = 0.01
 learning_rates = [.001, .01, .1]
 confusion_matrix = [[[0 for _ in range(num_outputs)]
@@ -29,10 +28,11 @@ confusion_matrix = [[[0 for _ in range(num_outputs)]
 mnist_data = MNIST('mnist-data')
 x_train, y_train = mnist_data.load_training()
 x_train, y_train = x_train[:num_train], y_train[:num_train]
-x_train = np.hstack((np.ones((num_train, 1)),
-                    [x/max_value for x in np.array(x_train, dtype='f')]))
 x_test, y_test = mnist_data.load_testing()
 x_test, y_test = x_test[:num_test], y_test[:num_test]
+# Biases, normalization
+x_train = np.hstack((np.ones((num_train, 1)),
+                    [x/max_value for x in np.array(x_train, dtype='f')]))
 x_test = np.hstack((np.ones((num_test, 1)),
                     [x/max_value for x in np.array(x_test, dtype='f')]))
 

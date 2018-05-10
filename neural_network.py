@@ -20,8 +20,7 @@ batch_size = 100  # Number of images to go through before updating weights
 num_batches = num_train//batch_size  # For splitting data into chunks
 h_num_weights = range(num_inputs+1)
 h_init_weights = [uniform(-.05, .05) for _ in h_num_weights]
-train_accuracies = [[], [], []]
-test_accuracies = [[], [], []]
+train_accuracies, test_accuracies = [[], [], []], [[], [], []]
 momentums = [0, 0.25, 0.5, 0.9]  # Experiment 2
 train_fracs = [2, 4]  # Experiment 3
 acc_limit = 0.01  # Accuracy change between epochs below this ends training
@@ -31,12 +30,12 @@ confusion_matrix = [[[0 for _ in range(num_outputs)]
 
 mnist_data = MNIST('mnist-data')
 x_train, y_train = mnist_data.load_training()
-x_test, y_test = mnist_data.load_testing()
 x_train, y_train = x_train[:num_train], np.array(y_train[:num_train])
+x_test, y_test = mnist_data.load_testing()
+x_test, y_test = x_test[:num_test], y_test[:num_test]
 # Biases, normalization
 x_train = np.hstack((np.ones((num_train, 1)),
                     [x/max_value for x in np.array(x_train, dtype='f')]))
-x_test, y_test = x_test[:num_test], y_test[:num_test]
 x_test = np.hstack((np.ones((num_test, 1)),
                    [x/max_value for x in np.array(x_test, dtype='f')]))
 
