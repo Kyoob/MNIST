@@ -46,6 +46,7 @@ def main():
     plt.xlabel('Epoch')
     plt.ylabel('Accuracy')
 
+    # Uncomment the experiment you wish to run
     # experiment1()
     # experiment2()
     # experiment3()
@@ -205,7 +206,7 @@ def train(h_weights, o_weights, i, n, momentum,
     o_deltas = np.array([[0.0]*n]*num_outputs)
     o_prev_deltas = np.array(o_deltas)
 
-    for j, (image, target) in enumerate(zip(x_train, y_train)):
+    for i, (image, target) in enumerate(zip(x_train, y_train)):
         # Forward (calculate values)
         h_values = np.array(sig(h_weights@image))
         h_values[0] = 1.0  # Keep bias 1
@@ -218,7 +219,7 @@ def train(h_weights, o_weights, i, n, momentum,
         deltas = [learning_rate*error*h_values + momentum*delta
                   for error, delta in zip(o_errors, o_prev_deltas)]
         o_prev_deltas = np.array(deltas)
-        if j > 0 and j % batch_size == 0:
+        if i > 0 and i % batch_size == 0:
             o_weights += o_deltas/batch_size
             o_deltas *= 0
         else:
@@ -230,7 +231,7 @@ def train(h_weights, o_weights, i, n, momentum,
         deltas = [learning_rate*error*np.array(image) + momentum*delta
                   for error, delta in zip(h_errors, h_prev_deltas)]
         h_prev_deltas = np.array(deltas)
-        if j > 0 and j % batch_size == 0:
+        if i > 0 and i % batch_size == 0:
             h_weights += h_deltas/batch_size
             h_deltas *= 0
         else:
