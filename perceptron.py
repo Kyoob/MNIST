@@ -26,15 +26,15 @@ confusion_matrix = [[[0 for _ in range(num_outputs)]
                      for _ in range(num_outputs)] for _ in range(3)]
 
 mnist_data = MNIST('mnist-data')
-x_train, y_train = mnist_data.load_training()
-x_train, y_train = x_train[:num_train], y_train[:num_train]
-x_test, y_test = mnist_data.load_testing()
-x_test, y_test = x_test[:num_test], y_test[:num_test]
+X_train, y_train = mnist_data.load_training()
+X_train, y_train = X_train[:num_train], y_train[:num_train]
+X_test, y_test = mnist_data.load_testing()
+X_test, y_test = X_test[:num_test], y_test[:num_test]
 # Biases, normalization
-x_train = np.hstack((np.ones((num_train, 1)),
-                    [x/max_value for x in np.array(x_train, dtype='f')]))
-x_test = np.hstack((np.ones((num_test, 1)),
-                    [x/max_value for x in np.array(x_test, dtype='f')]))
+X_train = np.hstack((np.ones((num_train, 1)),
+                    [x/max_value for x in np.array(X_train, dtype='f')]))
+X_test = np.hstack((np.ones((num_test, 1)),
+                    [x/max_value for x in np.array(X_test, dtype='f')]))
 
 
 def main():
@@ -58,10 +58,10 @@ def main():
             # Train training data
             print(f'Epoch {epoch}')
             errors = [[] for _ in range(num_outputs)]
-            for i, (image, target) in enumerate(zip(x_train, y_train)):
+            for i, (image, target) in enumerate(zip(X_train, y_train)):
                 for j, weights in enumerate(o_weights):
-                    t = 1 if j == target else 0
-                    y = 1 if image@weights > 0 else 0
+                    t = int(j == target)
+                    y = int(image@weights > 0)
                     error = learning_rate*(t-y)*image
                     if i > 0 and i % batch_size == 0:
                         o_weights[j] += sum(errors[j])/batch_size
@@ -78,7 +78,7 @@ def main():
                 break
 
         # Update confusion matrix
-        for image, target in zip(x_test, y_test):
+        for image, target in zip(X_test, y_test):
             predicted = np.argmax(o_weights@image)
             confusion_matrix[n][predicted][target] += 1
         ax.plot(train_accuracies[n], label=f'Training (LR={learning_rate})')
@@ -92,12 +92,12 @@ def main():
 
 def accuracy(weights):
     correct_train = correct_test = 0
-    for image, target in zip(x_train, y_train):
+    for image, target in zip(X_train, y_train):
         predicted = np.argmax(weights@image)
-        correct_train += 1 if predicted == target else 0
-    for image, target in zip(x_test, y_test):
+        correct_train += int(predicted == target)
+    for image, target in zip(X_test, y_test):
         predicted = np.argmax(weights@image)
-        correct_test += 1 if predicted == target else 0
+        correct_test += int(predicted == target)
     return ([correct_train / num_train * 100], [correct_test / num_test * 100])
 
 

@@ -29,23 +29,23 @@ confusion_matrix = [[[0 for _ in range(num_outputs)]
                      for _ in range(num_outputs)] for _ in range(3)]
 
 mnist_data = MNIST('mnist-data')
-x_train, y_train = mnist_data.load_training()
-x_train, y_train = x_train[:num_train], np.array(y_train[:num_train])
-x_test, y_test = mnist_data.load_testing()
-x_test, y_test = x_test[:num_test], y_test[:num_test]
+X_train, y_train = mnist_data.load_training()
+X_train, y_train = X_train[:num_train], np.array(y_train[:num_train])
+X_test, y_test = mnist_data.load_testing()
+X_test, y_test = X_test[:num_test], y_test[:num_test]
 # Biases, normalization
-x_train = np.hstack((np.ones((num_train, 1)),
-                    [x/max_value for x in np.array(x_train, dtype='f')]))
-x_test = np.hstack((np.ones((num_test, 1)),
-                   [x/max_value for x in np.array(x_test, dtype='f')]))
+X_train = np.hstack((np.ones((num_train, 1)),
+                    [x/max_value for x in np.array(X_train, dtype='f')]))
+X_test = np.hstack((np.ones((num_test, 1)),
+                   [x/max_value for x in np.array(X_test, dtype='f')]))
 
+sns.set_style('darkgrid')
+plt.title('Accuracy Over Time')
+plt.xlabel('Epoch')
+plt.ylabel('Accuracy')
+_, ax = plt.subplots()
 
 def main():
-    sns.set_style('darkgrid')
-    plt.title('Accuracy Over Time')
-    plt.xlabel('Epoch')
-    plt.ylabel('Accuracy')
-
     # Uncomment the experiment you wish to run
     # experiment1()
     # experiment2()
@@ -53,8 +53,6 @@ def main():
 
 
 def experiment1(num_hiddens=num_hiddens, momentum=momentums[3]):
-    _, ax = plt.subplots()
-
     print('Performing experiment with varying number of hidden neurons.')
     for i, n in enumerate(num_hiddens):
         n += 1  # Bias
@@ -87,7 +85,7 @@ def experiment1(num_hiddens=num_hiddens, momentum=momentums[3]):
                 break
 
         # Update confusion matrix
-        for image, target in zip(x_test, y_test):
+        for image, target in zip(X_test, y_test):
             predicted = np.argmax(sig(o_weights@sig(h_weights@image)))
             confusion_matrix[i][predicted][target] += 1
         ax.plot(train_accuracies[i], label=f'Training ({n-1} hiddens)')
@@ -100,7 +98,6 @@ def experiment1(num_hiddens=num_hiddens, momentum=momentums[3]):
 
 
 def experiment2(n=num_hiddens[2], momentums=momentums[:3]):
-    _, ax = plt.subplots()
     n += 1  # Bias
     o_num_weights = range(n)
     o_init_weights = [[uniform(-.05, .05) for _ in o_num_weights]
@@ -135,7 +132,7 @@ def experiment2(n=num_hiddens[2], momentums=momentums[:3]):
                 break
 
         # Update confusion matrix
-        for image, target in zip(x_test, y_test):
+        for image, target in zip(X_test, y_test):
             predicted = np.argmax(sig(o_weights@sig(h_weights@image)))
             confusion_matrix[i][predicted][target] += 1
         ax.plot(train_accuracies[i], label=f'Training ({momentum} momentum)')
@@ -148,7 +145,6 @@ def experiment2(n=num_hiddens[2], momentums=momentums[:3]):
 
 
 def experiment3(n=num_hiddens[2], momentum=momentums[3]):
-    _, ax = plt.subplots()
     n += 1
     o_num_weights = range(n)
     o_init_weights = [[uniform(-.05, .05) for _ in o_num_weights]
@@ -172,7 +168,7 @@ def experiment3(n=num_hiddens[2], momentum=momentums[3]):
             # Train training data
             print(f'Epoch {epoch}')
             h_weights, o_weights = train(h_weights, o_weights, i, n, momentum,
-                                         x_train=x_train, y_train=y_train)
+                                         X_train=X_train, y_train=y_train)
 
             # Calculate accuracies
             accuracies = accuracy(h_weights, o_weights)
@@ -185,7 +181,7 @@ def experiment3(n=num_hiddens[2], momentum=momentums[3]):
                 break
 
         # Update confusion matrix
-        for image, target in zip(x_test, y_test):
+        for image, target in zip(X_test, y_test):
             predicted = np.argmax(sig(o_weights@sig(h_weights@image)))
             confusion_matrix[i][predicted][target] += 1
         ax.plot(train_accuracies[i], label=f'Training ({num_train2} examples)')
@@ -198,7 +194,7 @@ def experiment3(n=num_hiddens[2], momentum=momentums[3]):
 
 
 def train(h_weights, o_weights, i, n, momentum,
-          x_train=x_train, y_train=y_train):
+          X_train=X_train, y_train=y_train):
     h_errors = [0] * n
     h_deltas = np.array([[0.0]*(num_inputs+1)]*n)
     h_prev_deltas = np.array(h_deltas)
@@ -206,16 +202,16 @@ def train(h_weights, o_weights, i, n, momentum,
     o_deltas = np.array([[0.0]*n]*num_outputs)
     o_prev_deltas = np.array(o_deltas)
 
-    for i, (image, target) in enumerate(zip(x_train, y_train)):
+    for i, (image, target) in enumerate(zip(X_train, y_train)):
         # Forward (calculate values)
         h_values = np.array(sig(h_weights@image))
         h_values[0] = 1.0  # Keep bias 1
         o_values = np.array(sig(o_weights@h_values))
 
         # Backward (calculate errors, update weights)
-        o_errors = np.array([o*(1-o)*(0.9-o) if k == target
+        o_errors = np.array([o*(1-o)*(0.9-o) if j == target
                              else o*(1-o)*(0.1-o)
-                             for k, o in enumerate(o_values)])
+                             for j, o in enumerate(o_values)])
         deltas = [learning_rate*error*h_values + momentum*delta
                   for error, delta in zip(o_errors, o_prev_deltas)]
         o_prev_deltas = np.array(deltas)
@@ -225,9 +221,9 @@ def train(h_weights, o_weights, i, n, momentum,
         else:
             o_deltas += deltas
 
-        h_o_weights = [[w[k] for w in o_weights] for k in range(n)]
-        h_errors = np.array([h*(1-h)*(h_o_weights[k]@o_errors)
-                             for k, h in enumerate(h_values)])
+        h_o_weights = [[w[j] for w in o_weights] for j in range(n)]
+        h_errors = np.array([h*(1-h)*(h_o_weights[j]@o_errors)
+                             for j, h in enumerate(h_values)])
         deltas = [learning_rate*error*np.array(image) + momentum*delta
                   for error, delta in zip(h_errors, h_prev_deltas)]
         h_prev_deltas = np.array(deltas)
@@ -242,12 +238,12 @@ def train(h_weights, o_weights, i, n, momentum,
 
 def accuracy(h_weights, o_weights, num_train=num_train):
     correct_train = correct_test = 0
-    for image, target in zip(x_train, y_train):
+    for image, target in zip(X_train, y_train):
         predicted = np.argmax(sig(o_weights@sig(h_weights@image)))
-        correct_train += 1 if predicted == target else 0
-    for image, target in zip(x_test, y_test):
+        correct_train += int(predicted == target)
+    for image, target in zip(X_test, y_test):
         predicted = np.argmax(sig(o_weights@sig(h_weights@image)))
-        correct_test += 1 if predicted == target else 0
+        correct_test += int(predicted == target)
     return [correct_train / num_train * 100], [correct_test / num_test * 100]
 
 
