@@ -25,17 +25,6 @@ learning_rates = [.001, .01, .1]
 confusion_matrix = [[[0 for _ in range(num_outputs)]
                      for _ in range(num_outputs)] for _ in range(3)]
 
-mnist_data = MNIST('mnist-data')
-X_train, y_train = mnist_data.load_training()
-X_train, y_train = X_train[:num_train], y_train[:num_train]
-X_test, y_test = mnist_data.load_testing()
-X_test, y_test = X_test[:num_test], y_test[:num_test]
-# Biases, normalization
-X_train = np.hstack((np.ones((num_train, 1)),
-                    [x/max_value for x in np.array(X_train, dtype='f')]))
-X_test = np.hstack((np.ones((num_test, 1)),
-                    [x/max_value for x in np.array(X_test, dtype='f')]))
-
 
 def main():
     sns.set_style('darkgrid')
@@ -43,13 +32,14 @@ def main():
     plt.title('Accuracy Over Time')
     plt.xlabel('Epoch')
     plt.ylabel('Accuracy')
+    X_train, y_train, X_test, y_test = get_data()
 
     for n, learning_rate in enumerate(learning_rates):
         o_weights = [*init_weights]
 
         # Initial accuracy
         print('Epoch 0')
-        accuracies = accuracy(o_weights)
+        accuracies = accuracy(X_train, y_train, X_test, y_test, o_weights)
         train_accuracies[n] += accuracies[0]
         test_accuracies[n] += accuracies[1]
         print(f'Train accuracy: {train_accuracies[n][0]}')
@@ -68,7 +58,7 @@ def main():
                         errors[j] = []
                     else:
                         errors[j] += [error]
-            accuracies = accuracy(o_weights)
+            accuracies = accuracy(X_train, y_train, X_test, y_test, o_weights)
             train_accuracies[n] += accuracies[0]
             test_accuracies[n] += accuracies[1]
             print(f'Train accuracy: {train_accuracies[n][epoch]}')
@@ -90,7 +80,7 @@ def main():
     plt.show()
 
 
-def accuracy(weights):
+def accuracy(X_train, y_train, X_test, y_test, weights):
     correct_train = correct_test = 0
     for image, target in zip(X_train, y_train):
         predicted = np.argmax(weights@image)
@@ -99,6 +89,20 @@ def accuracy(weights):
         predicted = np.argmax(weights@image)
         correct_test += int(predicted == target)
     return ([correct_train / num_train * 100], [correct_test / num_test * 100])
+
+
+def get_data():
+    mnist_data = MNIST('mnist-data')
+    X_train, y_train = mnist_data.load_training()
+    X_train, y_train = X_train[:num_train], y_train[:num_train]
+    X_test, y_test = mnist_data.load_testing()
+    X_test, y_test = X_test[:num_test], y_test[:num_test]
+    # Biases, normalization
+    X_train = np.hstack((np.ones((num_train, 1)),
+                        [x/max_value for x in np.array(X_train, dtype='f')]))
+    X_test = np.hstack((np.ones((num_test, 1)),
+                        [x/max_value for x in np.array(X_test, dtype='f')]))
+    return X_train, y_train, X_test, y_test
 
 
 if __name__ == '__main__':
