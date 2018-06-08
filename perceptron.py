@@ -92,7 +92,7 @@ def accuracy(X_train, y_train, X_test, y_test, weights):
 
 
 def get_data():
-    mnist_data = MNIST('mnist-data')
+    mnist_data = MNIST('data')
     X_train, y_train = mnist_data.load_training()
     X_train, y_train = X_train[:num_train], y_train[:num_train]
     X_test, y_test = mnist_data.load_testing()
