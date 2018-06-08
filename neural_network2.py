@@ -5,38 +5,32 @@
     Tim Coutinho
 """
 
-from keras import layers, backend
+from keras import backend
+from keras.layers import Dense, Flatten, Input
 from keras.models import Model, Sequential
 from keras.optimizers import SGD
 from keras.preprocessing.image import ImageDataGenerator
 from keras.utils.np_utils import to_categorical
+from matplotlib import style
 from mnist import MNIST
 from tensorflow import ConfigProto, GPUOptions, Session
 import matplotlib.pyplot as plt
 import numpy as np
-import seaborn as sns
 
 num_train, num_test = 60000, 10000  # Default to max possible
-max_epochs = 50
+max_epochs = 10
 batch_size = 100  # Number of images to go through before updating weights
 
-mnist_data = MNIST('mnist-data')
-X_train, y_train = mnist_data.load_training()
-X_train, y_train = X_train[:num_train], y_train[:num_train]
-X_train = np.reshape(X_train, (num_train, 28, 28)+(1,))
-y_train = to_categorical(y_train)
-
-X_test, y_test = mnist_data.load_testing()
-X_test, y_test = X_test[:num_test], y_test[:num_test]
-X_test = np.reshape(X_test, (num_test, 28, 28)+(1,))
-y_test = to_categorical(y_test)
-
+style.use('ggplot')
 tf_config = ConfigProto(gpu_options=GPUOptions(allow_growth=True))
 backend.set_session(Session(config=tf_config))
 
+
 def main():
+    X_train, y_train, X_test, y_test = get_data()
+
     # Functional
-    img_input = layers.Input(shape=(28, 28, 1))
+    img_input = Input(shape=(28, 28, 1))
     # Additional layers really not necessary on this simple of a dataset
     # x = layers.Conv2D(16, 3, activation='relu')(img_input)
     # x = layers.MaxPooling2D(2)(x)
@@ -45,14 +39,14 @@ def main():
     # x = layers.Dropout(0.2)(x)
     # x = layers.Conv2D(64, 3, activation='relu')(x)
     # x = layers.MaxPooling2D(2)(x)
-    x = layers.Flatten()(img_input)
-    x = layers.Dense(100, activation='sigmoid')(x)
-    output = layers.Dense(10, activation='sigmoid')(x)
+    x = Flatten()(img_input)
+    x = Dense(100, activation='sigmoid')(x)
+    output = Dense(10, activation='sigmoid')(x)
     model = Model(img_input, output)
     # Sequential
-    # model = Sequential([layers.Flatten(input_shape=(28, 28, 1)),
-    #                     layers.Dense(100, activation='sigmoid'), 
-    #                     layers.Dense(10, activation='sigmoid')])
+    # model = Sequential([Flatten(input_shape=(28, 28, 1)),
+    #                     Dense(100, activation='sigmoid'), 
+    #                     Dense(10, activation='sigmoid')])
     model.compile(loss='categorical_crossentropy',
                   optimizer=SGD(lr=0.1, momentum=0.9), metrics=['acc'])
     train_datagen = ImageDataGenerator(rescale=1./255)
@@ -65,7 +59,7 @@ def main():
         validation_steps=num_test/batch_size,
         epochs=max_epochs, verbose=2).history
     epochs = range(max_epochs)
-    sns.set_style('darkgrid')
+    # sns.set_style('darkgrid')
     plt.plot(epochs, history['acc'], label='Training')
     plt.plot(epochs, history['val_acc'], label='Testing')
     plt.title('Training and testing accuracy')
@@ -81,6 +75,20 @@ def main():
     plt.ylabel('Loss')
     plt.legend()
     plt.show()
+
+
+def get_data():
+    mnist_data = MNIST('data')
+    X_train, y_train = mnist_data.load_training()
+    X_train, y_train = X_train[:num_train], y_train[:num_train]
+    X_train = np.reshape(X_train, (num_train, 28, 28)+(1,))
+    y_train = to_categorical(y_train)
+
+    X_test, y_test = mnist_data.load_testing()
+    X_test, y_test = X_test[:num_test], y_test[:num_test]
+    X_test = np.reshape(X_test, (num_test, 28, 28)+(1,))
+    y_test = to_categorical(y_test)
+    return X_train, y_train, X_test, y_test
 
 
 if __name__ == '__main__':
